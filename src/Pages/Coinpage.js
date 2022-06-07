@@ -9,12 +9,15 @@ import { styled } from "@mui/material/styles";
 import { LinearProgress, Typography } from "@mui/material";
 // import parse from "html-react-parser";
 import { numberWithCommas } from "../Components/CoinsTable";
+import { Button } from "@mui/material";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 const Coinpage = () => {
   const { id } = useParams();
   const [coin, setCoin] = useState();
 
-  const { currency, symbol } = CryptoState();
+  const { currency, symbol, user, watchlist, setAlert } = CryptoState();
 
   const fetchCoin = async () => {
     const { data } = await axios.get(SingleCoin(id));
@@ -59,6 +62,7 @@ const Coinpage = () => {
 
     [theme.breakpoints.down("md")]: {
       display: "flex",
+      flexDirection: "column",
       justifyContent: "space-around",
     },
     [theme.breakpoints.down("sm")]: {
@@ -69,6 +73,53 @@ const Coinpage = () => {
       alignItems: "start",
     },
   }));
+
+  const inWatchlist = watchlist.includes(coin?.id);
+  const addToWatchlist = async () => {
+    const coinRef = doc(db, "watchlist", user.uid);
+    try {
+      await setDoc(coinRef, {
+        coins: watchlist ? [...watchlist, coin?.id] : [coin?.id],
+      });
+
+      setAlert({
+        open: true,
+        message: `${coin.name} Added to the Watchlist !`,
+        type: "success",
+      });
+    } catch (error) {
+      setAlert({
+        open: true,
+        message: error.message,
+        type: "error",
+      });
+    }
+  };
+  const removeFromWatchlist = async () => {
+    const coinRef = doc(db, "watchlist", user.uid);
+    try {
+      await setDoc(
+        coinRef,
+        {
+          coins: watchlist.filter((watch) => watch !== coin?.id),
+        },
+
+        { merge: "true" }
+      );
+
+      setAlert({
+        open: true,
+        message: `${coin.name} Removed to the Watchlist !`,
+        type: "success",
+      });
+    } catch (error) {
+      setAlert({
+        open: true,
+        message: error.message,
+        type: "error",
+      });
+    }
+  };
 
   if (!coin) return <LinearProgress style={{ backgroundColor: "gold" }} />;
   const htmlFromCMS = coin?.description.en.split(". ")[0];
@@ -173,6 +224,20 @@ const Coinpage = () => {
               M
             </Typography>
           </span>
+          {user && (
+            <Button
+              style={{
+                width: "100%",
+                height: 40,
+                backgroundColor: inWatchlist ? "#ff0000" : "#EEBC1D",
+                color: "black",
+              }}
+              variant="outlined"
+              onClick={inWatchlist ? removeFromWatchlist : addToWatchlist}
+            >
+              {inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
+            </Button>
+          )}
         </MarketData>
       </SideBar>
       {/* chart */}

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./Components/Header";
 import Homepage from "./Pages/Homepage";
 import Coinpage from "./Pages/Coinpage";
+import Alert from "./Components/Alert";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/coins/:id" element={<Coinpage />} />
           </Routes>
         </div>
+        <Alert />
       </BrowserRouter>
     </div>
   );
